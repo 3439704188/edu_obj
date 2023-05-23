@@ -1,0 +1,6 @@
+#!/bin/bash
+for i in hadoop100
+do
+    echo "========== $i =========="
+    ssh $i "cd /opt/module/data_mocker/; nohup java -jar edu2021-mock-2022-06-18.jar $1 $2 >/dev/null 2>&1 &"
+done
