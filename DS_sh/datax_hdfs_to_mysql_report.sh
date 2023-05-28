@@ -22,70 +22,139 @@ export_data() {
 }
 
 case $1 in
-  "ads_coupon_stats")
-    export_data /opt/module/datax/job/export/gmall_report.ads_coupon_stats.json /warehouse/gmall/ads/ads_coupon_stats
+  "ads_age_group_order_user_count")
+    export_data /opt/module/datax/job/export/edu_report.ads_age_group_order_user_count.json /warehouse/edu/ads/ads_age_group_order_user_count
+  ;;
+  "ads_complete")
+    export_data /opt/module/datax/job/export/edu_report.ads_complete.json /warehouse/edu/ads/ads_complete
+  ;;
+  "ads_complete_avg_chapter_by_course")
+    export_data /opt/module/datax/job/export/edu_report.ads_complete_avg_chapter_by_course.json /warehouse/edu/ads/ads_complete_avg_chapter_by_course
+  ;;
+  "ads_complete_course")
+    export_data /opt/module/datax/job/export/edu_report.ads_complete_course.json /warehouse/edu/ads/ads_complete_course
+  ;;
+  "ads_course_review_stats")
+    export_data /opt/module/datax/job/export/edu_report.ads_course_review_stats.json /warehouse/edu/ads/ads_course_review_stats
+  ;;
+  "ads_course_video_play")
+    export_data /opt/module/datax/job/export/edu_report.ads_course_video_play.json /warehouse/edu/ads/ads_course_video_play
   ;;
   "ads_new_order_user_stats")
-    export_data /opt/module/datax/job/export/gmall_report.ads_new_order_user_stats.json /warehouse/gmall/ads/ads_new_order_user_stats
-  ;;  
+    export_data /opt/module/datax/job/export/edu_report.ads_new_order_user_stats.json /warehouse/edu/ads/ads_new_order_user_stats
+  ;;
+  "ads_new_payment_user_stats")
+    export_data /opt/module/datax/job/export/edu_report.ads_new_payment_user_stats.json /warehouse/edu/ads/ads_new_payment_user_stats
+  ;;
+  "ads_order")
+    export_data /opt/module/datax/job/export/edu_report.ads_order.json /warehouse/edu/ads/ads_order
+  ;;
   "ads_order_by_province")
-    export_data /opt/module/datax/job/export/gmall_report.ads_order_by_province.json /warehouse/gmall/ads/ads_order_by_province
+    export_data /opt/module/datax/job/export/edu_report.ads_order_by_province.json /warehouse/edu/ads/ads_order_by_province
   ;;
-  "ads_order_continuously_user_count")
-    export_data /opt/module/datax/job/export/gmall_report.ads_order_continuously_user_count.json /warehouse/gmall/ads/ads_order_continuously_user_count
+  "ads_order_stats_by_category")
+    export_data /opt/module/datax/job/export/edu_report.ads_order_stats_by_category.json /warehouse/edu/ads/ads_order_stats_by_category
   ;;
-  "ads_order_stats_by_cate")
-    export_data /opt/module/datax/job/export/gmall_report.ads_order_stats_by_cate.json /warehouse/gmall/ads/ads_order_stats_by_cate
+  "ads_order_stats_by_course")
+    export_data /opt/module/datax/job/export/edu_report.ads_order_stats_by_course.json /warehouse/edu/ads/ads_order_stats_by_course
   ;;
-  "ads_order_stats_by_tm")
-    export_data /opt/module/datax/job/export/gmall_report.ads_order_stats_by_tm.json /warehouse/gmall/ads/ads_order_stats_by_tm
-  ;;  
-  "ads_order_to_pay_interval_avg")
-    export_data /opt/module/datax/job/export/gmall_report.ads_order_to_pay_interval_avg.json /warehouse/gmall/ads/ads_order_to_pay_interval_avg
+  "ads_order_stats_by_subject")
+    export_data /opt/module/datax/job/export/edu_report.ads_order_stats_by_subject.json /warehouse/edu/ads/ads_order_stats_by_subject
   ;;
   "ads_page_path")
-    export_data /opt/module/datax/job/export/gmall_report.ads_page_path.json /warehouse/gmall/ads/ads_page_path
+    export_data /opt/module/datax/job/export/edu_report.ads_page_path.json /warehouse/edu/ads/ads_page_path
   ;;
-  "ads_repeat_purchase_by_tm")
-    export_data /opt/module/datax/job/export/gmall_report.ads_repeat_purchase_by_tm.json /warehouse/gmall/ads/ads_repeat_purchase_by_tm
+  "ads_paper_test_stats")
+    export_data /opt/module/datax/job/export/edu_report.ads_paper_test_stats.json /warehouse/edu/ads/ads_paper_test_stats
   ;;
-  "ads_sku_cart_num_top3_by_cate")
-    export_data /opt/module/datax/job/export/gmall_report.ads_sku_cart_num_top3_by_cate.json /warehouse/gmall/ads/ads_sku_cart_num_top3_by_cate
-  ;;  
-  "ads_sku_favor_count_top3_by_tm")
-    export_data /opt/module/datax/job/export/gmall_report.ads_sku_favor_count_top3_by_tm.json /warehouse/gmall/ads/ads_sku_favor_count_top3_by_tm
+  "ads_question_correct_rate_stats")
+    export_data /opt/module/datax/job/export/edu_report.ads_question_correct_rate_stats.json /warehouse/edu/ads/ads_question_correct_rate_stats
   ;;
-  "ads_traffic_stats_by_channel")
-    export_data /opt/module/datax/job/export/gmall_report.ads_traffic_stats_by_channel.json /warehouse/gmall/ads/ads_traffic_stats_by_channel
+  "ads_shot_order_by_category")
+    export_data /opt/module/datax/job/export/edu_report.ads_shot_order_by_category.json /warehouse/edu/ads/ads_shot_order_by_category
+  ;;
+  "ads_shot_order_by_course")
+    export_data /opt/module/datax/job/export/edu_report.ads_shot_order_by_course.json /warehouse/edu/ads/ads_shot_order_by_course
+  ;;
+  "ads_shot_order_by_subject")
+    export_data /opt/module/datax/job/export/edu_report.ads_shot_order_by_subject.json /warehouse/edu/ads/ads_shot_order_by_subject
+  ;;
+  "ads_traffic_order_by_source")
+    export_data /opt/module/datax/job/export/edu_report.ads_traffic_order_by_source.json /warehouse/edu/ads/ads_traffic_order_by_source
+  ;;
+  "ads_traffic_stats_by_source")
+    export_data /opt/module/datax/job/export/edu_report.ads_traffic_stats_by_source.json /warehouse/edu/ads/ads_traffic_stats_by_source
   ;;
   "ads_user_action")
-    export_data /opt/module/datax/job/export/gmall_report.ads_user_action.json /warehouse/gmall/ads/ads_user_action
+    export_data /opt/module/datax/job/export/edu_report.ads_user_action.json /warehouse/edu/ads/ads_user_action
   ;;
   "ads_user_change")
-    export_data /opt/module/datax/job/export/gmall_report.ads_user_change.json /warehouse/gmall/ads/ads_user_change
-  ;;  
+    export_data /opt/module/datax/job/export/edu_report.ads_user_change.json /warehouse/edu/ads/ads_user_change
+  ;;
   "ads_user_retention")
-    export_data /opt/module/datax/job/export/gmall_report.ads_user_retention.json /warehouse/gmall/ads/ads_user_retention
+    export_data /opt/module/datax/job/export/edu_report.ads_user_retention.json /warehouse/edu/ads/ads_user_retention
   ;;
   "ads_user_stats")
-    export_data /opt/module/datax/job/export/gmall_report.ads_user_stats.json /warehouse/gmall/ads/ads_user_stats
+    export_data /opt/module/datax/job/export/edu_report.ads_user_stats.json /warehouse/edu/ads/ads_user_stats
   ;;
+  "ads_video_play")
+    export_data /opt/module/datax/job/export/edu_report.ads_video_play.json /warehouse/edu/ads/ads_video_play
+  ;;
+
+
+
   "all")
-    export_data /opt/module/datax/job/export/gmall_report.ads_coupon_stats.json /warehouse/gmall/ads/ads_coupon_stats
-    export_data /opt/module/datax/job/export/gmall_report.ads_new_order_user_stats.json /warehouse/gmall/ads/ads_new_order_user_stats
-    export_data /opt/module/datax/job/export/gmall_report.ads_order_by_province.json /warehouse/gmall/ads/ads_order_by_province
-    export_data /opt/module/datax/job/export/gmall_report.ads_order_continuously_user_count.json /warehouse/gmall/ads/ads_order_continuously_user_count
-    export_data /opt/module/datax/job/export/gmall_report.ads_order_stats_by_cate.json /warehouse/gmall/ads/ads_order_stats_by_cate
-    export_data /opt/module/datax/job/export/gmall_report.ads_order_stats_by_tm.json /warehouse/gmall/ads/ads_order_stats_by_tm
-    export_data /opt/module/datax/job/export/gmall_report.ads_order_to_pay_interval_avg.json /warehouse/gmall/ads/ads_order_to_pay_interval_avg
-    export_data /opt/module/datax/job/export/gmall_report.ads_page_path.json /warehouse/gmall/ads/ads_page_path
-    export_data /opt/module/datax/job/export/gmall_report.ads_repeat_purchase_by_tm.json /warehouse/gmall/ads/ads_repeat_purchase_by_tm
-    export_data /opt/module/datax/job/export/gmall_report.ads_sku_cart_num_top3_by_cate.json /warehouse/gmall/ads/ads_sku_cart_num_top3_by_cate
-    export_data /opt/module/datax/job/export/gmall_report.ads_sku_favor_count_top3_by_tm.json /warehouse/gmall/ads/ads_sku_favor_count_top3_by_tm
-    export_data /opt/module/datax/job/export/gmall_report.ads_traffic_stats_by_channel.json /warehouse/gmall/ads/ads_traffic_stats_by_channel
-    export_data /opt/module/datax/job/export/gmall_report.ads_user_action.json /warehouse/gmall/ads/ads_user_action
-    export_data /opt/module/datax/job/export/gmall_report.ads_user_change.json /warehouse/gmall/ads/ads_user_change
-    export_data /opt/module/datax/job/export/gmall_report.ads_user_retention.json /warehouse/gmall/ads/ads_user_retention
-    export_data /opt/module/datax/job/export/gmall_report.ads_user_stats.json /warehouse/gmall/ads/ads_user_stats
+    export_data /opt/module/datax/job/export/edu_report.ads_age_group_order_user_count.json /warehouse/edu/ads/ads_age_group_order_user_count
+
+    export_data /opt/module/datax/job/export/edu_report.ads_complete.json /warehouse/edu/ads/ads_complete
+
+    export_data /opt/module/datax/job/export/edu_report.ads_complete_avg_chapter_by_course.json /warehouse/edu/ads/ads_complete_avg_chapter_by_course
+
+    export_data /opt/module/datax/job/export/edu_report.ads_complete_course.json /warehouse/edu/ads/ads_complete_course
+
+    export_data /opt/module/datax/job/export/edu_report.ads_course_review_stats.json /warehouse/edu/ads/ads_course_review_stats
+
+    export_data /opt/module/datax/job/export/edu_report.ads_course_video_play.json /warehouse/edu/ads/ads_course_video_play
+
+    export_data /opt/module/datax/job/export/edu_report.ads_new_order_user_stats.json /warehouse/edu/ads/ads_new_order_user_stats
+
+    export_data /opt/module/datax/job/export/edu_report.ads_new_payment_user_stats.json /warehouse/edu/ads/ads_new_payment_user_stats
+
+    export_data /opt/module/datax/job/export/edu_report.ads_order.json /warehouse/edu/ads/ads_order
+
+    export_data /opt/module/datax/job/export/edu_report.ads_order_by_province.json /warehouse/edu/ads/ads_order_by_province
+
+    export_data /opt/module/datax/job/export/edu_report.ads_order_stats_by_category.json /warehouse/edu/ads/ads_order_stats_by_category
+
+    export_data /opt/module/datax/job/export/edu_report.ads_order_stats_by_course.json /warehouse/edu/ads/ads_order_stats_by_course
+
+    export_data /opt/module/datax/job/export/edu_report.ads_order_stats_by_subject.json /warehouse/edu/ads/ads_order_stats_by_subject
+
+    export_data /opt/module/datax/job/export/edu_report.ads_page_path.json /warehouse/edu/ads/ads_page_path
+
+    export_data /opt/module/datax/job/export/edu_report.ads_paper_test_stats.json /warehouse/edu/ads/ads_paper_test_stats
+
+    export_data /opt/module/datax/job/export/edu_report.ads_question_correct_rate_stats.json /warehouse/edu/ads/ads_question_correct_rate_stats
+
+    export_data /opt/module/datax/job/export/edu_report.ads_shot_order_by_category.json /warehouse/edu/ads/ads_shot_order_by_category
+
+    export_data /opt/module/datax/job/export/edu_report.ads_shot_order_by_course.json /warehouse/edu/ads/ads_shot_order_by_course
+
+    export_data /opt/module/datax/job/export/edu_report.ads_shot_order_by_subject.json /warehouse/edu/ads/ads_shot_order_by_subject
+
+    export_data /opt/module/datax/job/export/edu_report.ads_traffic_order_by_source.json /warehouse/edu/ads/ads_traffic_order_by_source
+
+    export_data /opt/module/datax/job/export/edu_report.ads_traffic_stats_by_source.json /warehouse/edu/ads/ads_traffic_stats_by_source
+
+    export_data /opt/module/datax/job/export/edu_report.ads_user_action.json /warehouse/edu/ads/ads_user_action
+
+    export_data /opt/module/datax/job/export/edu_report.ads_user_change.json /warehouse/edu/ads/ads_user_change
+
+    export_data /opt/module/datax/job/export/edu_report.ads_user_retention.json /warehouse/edu/ads/ads_user_retention
+
+    export_data /opt/module/datax/job/export/edu_report.ads_user_stats.json /warehouse/edu/ads/ads_user_stats
+
+    export_data /opt/module/datax/job/export/edu_report.ads_video_play.json /warehouse/edu/ads/ads_video_play
+
   ;;
 esac

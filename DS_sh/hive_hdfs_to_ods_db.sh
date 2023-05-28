@@ -1,12 +1,14 @@
 #!/bin/bash
 
-APP=gmall
+APP=edu
 
 if [ -n "$2" ] ;then
    do_date=$2
 else 
    do_date=`date -d '-1 day' +%F`
 fi
+
+echo ================== 日志日期为 $do_date ==================
 
 load_data(){
     sql=""
@@ -22,66 +24,56 @@ load_data(){
 }
 
 case $1 in
-    "ods_activity_info_full")
-        load_data "ods_activity_info_full"
-    ;;
-    "ods_activity_rule_full")
-        load_data "ods_activity_rule_full"
-    ;;
-    "ods_base_category1_full")
-        load_data "ods_base_category1_full"
-    ;;
-    "ods_base_category2_full")
-        load_data "ods_base_category2_full"
-    ;;
-    "ods_base_category3_full")
-        load_data "ods_base_category3_full"
-    ;;
-    "ods_base_dic_full")
-        load_data "ods_base_dic_full"
+    "ods_base_category_info_full")
+        load_data "ods_base_category_info_full"
     ;;
     "ods_base_province_full")
         load_data "ods_base_province_full"
     ;;
-    "ods_base_region_full")
-        load_data "ods_base_region_full"
+    "ods_base_source_full")
+        load_data "ods_base_source_full"
     ;;
-    "ods_base_trademark_full")
-        load_data "ods_base_trademark_full"
+    "ods_base_subject_info_full")
+        load_data "ods_base_subject_info_full"
     ;;
     "ods_cart_info_full")
         load_data "ods_cart_info_full"
     ;;
-    "ods_coupon_info_full")
-        load_data "ods_coupon_info_full"
+    "ods_chapter_info_full")
+        load_data "ods_chapter_info_full"
     ;;
-    "ods_sku_attr_value_full")
-        load_data "ods_sku_attr_value_full"
+    "ods_course_info_full")
+        load_data "ods_course_info_full"
     ;;
-    "ods_sku_info_full")
-        load_data "ods_sku_info_full"
+    "ods_knowledge_point_full")
+        load_data "ods_knowledge_point_full"
     ;;
-    "ods_sku_sale_attr_value_full")
-        load_data "ods_sku_sale_attr_value_full"
+    "ods_test_paper_full")
+        load_data "ods_test_paper_full"
     ;;
-    "ods_spu_info_full")
-        load_data "ods_spu_info_full"
+    "ods_test_paper_question_full")
+        load_data "ods_test_paper_question_full"
     ;;
-    "ods_promotion_pos_full")
-        load_data "ods_promotion_pos_full"
+    "ods_test_point_question_full")
+        load_data "ods_test_point_question_full"
     ;;
-    "ods_promotion_refer_full")
-        load_data "ods_promotion_refer_full"
+    "ods_test_question_info_full")
+        load_data "ods_test_question_info_full"
     ;;
-
+    "ods_test_question_option_full")
+        load_data "ods_test_question_option_full"
+    ;;
+    "ods_video_info_full")
+        load_data "ods_video_info_full"
+    ;;
+    "ods_user_chapter_process_full")
+        load_data "ods_user_chapter_process_full"
+    ;;
     "ods_cart_info_inc")
         load_data "ods_cart_info_inc"
     ;;
     "ods_comment_info_inc")
         load_data "ods_comment_info_inc"
-    ;;
-    "ods_coupon_use_inc")
-        load_data "ods_coupon_use_inc"
     ;;
     "ods_favor_info_inc")
         load_data "ods_favor_info_inc"
@@ -89,31 +81,28 @@ case $1 in
     "ods_order_detail_inc")
         load_data "ods_order_detail_inc"
     ;;
-    "ods_order_detail_activity_inc")
-        load_data "ods_order_detail_activity_inc"
-    ;;
-    "ods_order_detail_coupon_inc")
-        load_data "ods_order_detail_coupon_inc"
-    ;;
     "ods_order_info_inc")
         load_data "ods_order_info_inc"
-    ;;
-    "ods_order_refund_info_inc")
-        load_data "ods_order_refund_info_inc"
-    ;;
-    "ods_order_status_log_inc")
-        load_data "ods_order_status_log_inc"
     ;;
     "ods_payment_info_inc")
         load_data "ods_payment_info_inc"
     ;;
-    "ods_refund_payment_inc")
-        load_data "ods_refund_payment_inc"
+    "ods_review_info_inc")
+        load_data "ods_review_info_inc"
+    ;;
+    "ods_test_exam_inc")
+        load_data "ods_test_exam_inc"
+    ;;
+    "ods_test_exam_question_inc")
+        load_data "ods_test_exam_question_inc"
     ;;
     "ods_user_info_inc")
         load_data "ods_user_info_inc"
     ;;
-    "all")
-        load_data "ods_activity_info_full" "ods_activity_rule_full" "ods_base_category1_full" "ods_base_category2_full" "ods_base_category3_full" "ods_base_dic_full" "ods_base_province_full" "ods_base_region_full" "ods_base_trademark_full" "ods_cart_info_full" "ods_coupon_info_full" "ods_sku_attr_value_full" "ods_sku_info_full" "ods_sku_sale_attr_value_full" "ods_spu_info_full" "ods_promotion_pos_full" "ods_promotion_refer_full" "ods_cart_info_inc" "ods_comment_info_inc" "ods_coupon_use_inc" "ods_favor_info_inc" "ods_order_detail_inc" "ods_order_detail_activity_inc" "ods_order_detail_coupon_inc" "ods_order_info_inc" "ods_order_refund_info_inc" "ods_order_status_log_inc" "ods_payment_info_inc" "ods_refund_payment_inc" "ods_user_info_inc"
+    "ods_vip_change_detail_inc")
+        load_data "ods_vip_change_detail_inc"
+    ;;
+   "all")
+load_data "ods_base_category_info_full" "ods_base_province_full" "ods_base_source_full" "ods_base_subject_info_full" "ods_cart_info_full" "ods_chapter_info_full" "ods_course_info_full" "ods_knowledge_point_full" "ods_test_paper_full" "ods_test_paper_question_full" "ods_test_point_question_full" "ods_test_question_info_full" "ods_test_question_option_full" "ods_video_info_full" "ods_user_chapter_process_full" "ods_cart_info_inc" "ods_comment_info_inc" "ods_favor_info_inc" "ods_order_detail_inc" "ods_order_info_inc" "ods_payment_info_inc" "ods_review_info_inc" "ods_test_exam_inc" "ods_test_exam_question_inc" "ods_user_info_inc" "ods_vip_change_detail_inc"
     ;;
 esac

@@ -1,220 +1,372 @@
 #!/bin/bash
 
-APP=gmall
-# 如果是输入的日期按照取输入日期；如果没输入日期取当前时间的前一天
+APP=edu
+
 if [ -n "$2" ] ;then
     do_date=$2
-else 
+else
     do_date=`date -d "-1 day" +%F`
 fi
 
-dwd_interaction_favor_add_inc="
-insert overwrite table ${APP}.dwd_interaction_favor_add_inc partition(dt='$do_date')
-select
-    data.id,
-    data.user_id,
-    data.sku_id,
-    date_format(data.create_time,'yyyy-MM-dd') date_id,
-    data.create_time
-from ${APP}.ods_favor_info_inc
-where dt='$do_date'
-and type = 'insert';
-"
 
-dwd_tool_coupon_used_inc="
-insert overwrite table ${APP}.dwd_tool_coupon_used_inc partition(dt='$do_date')
-select
-    data.id,
-    data.coupon_id,
-    data.user_id,
-    data.order_id,
-    date_format(data.used_time,'yyyy-MM-dd') date_id,
-    data.used_time
-from ${APP}.ods_coupon_use_inc
-where dt='$do_date'
-and type='update'
-and array_contains(map_keys(old),'used_time');
-"
-
-dwd_trade_cart_add_inc="
-insert overwrite table ${APP}.dwd_trade_cart_add_inc partition (dt = '$do_date')
-select data.id,
-       data.user_id,
-       data.sku_id,
-       date_format(from_utc_timestamp(ts * 1000, 'GMT+8'), 'yyyy-MM-dd')                          date_id,
-       date_format(from_utc_timestamp(ts * 1000, 'GMT+8'), 'yyyy-MM-dd HH:mm:ss')                 create_time,
-       if(type = 'insert', data.sku_num, cast(data.sku_num as int) - cast(old['sku_num'] as int)) sku_num
-from ${APP}.ods_cart_info_inc
-where dt = '$do_date'
-  and (type = 'insert'
-    or (type = 'update' and old['sku_num'] is not null and cast(data.sku_num as int) > cast(old['sku_num'] as int)));
-"
 dwd_trade_cart_full="
 insert overwrite table ${APP}.dwd_trade_cart_full partition(dt='$do_date')
 select
     id,
     user_id,
-    sku_id,
-    sku_name,
-    sku_num
+    course_id,
+    course_name
 from ${APP}.ods_cart_info_full
 where dt='$do_date'
-and is_ordered='0';
+and sold='0';
 "
 
-dwd_trade_trade_flow_acc="
-set hive.exec.dynamic.partition.mode=nonstrict;
-insert overwrite table ${APP}.dwd_trade_trade_flow_acc partition(dt)
-select
-    oi.order_id,
-    user_id,
-    province_id,
-    order_date_id,
-    order_time,
-    nvl(oi.payment_date_id,pi.payment_date_id),
-    nvl(oi.payment_time,pi.payment_time),
-    nvl(oi.finish_date_id,log.finish_date_id),
-    nvl(oi.finish_time,log.finish_time),
-    order_original_amount,
-    order_activity_amount,
-    order_coupon_amount,
-    order_total_amount,
-    nvl(oi.payment_amount,pi.payment_amount),
-    nvl(nvl(oi.finish_time,log.finish_time),'9999-12-31')
+dwd_consume_video_play_inc="
+insert overwrite table ${APP}.dwd_consume_video_play_inc partition (dt='$do_date')
+select distinct
+    process.id         ,
+    sub.category_id       ,
+    course.subject_id ,
+    process.course_id      ,
+    process.chapter_id   ,
+    video.id     ,
+    process.user_id      ,
+    process.position_sec      ,
+    process.create_time      ,
+    if(nvl(detail.create_time,'9999-12-31 00:00:00')>process.create_time,1,0)    ,
+    process.deleted
 from
 (
     select
-        order_id,
-        user_id,
-        province_id,
-        order_date_id,
-        order_time,
-        payment_date_id,
-        payment_time,
-        finish_date_id,
-        finish_time,
-        order_original_amount,
-        order_activity_amount,
-        order_coupon_amount,
-        order_total_amount,
-        payment_amount
-    from ${APP}.dwd_trade_trade_flow_acc
-    where dt='9999-12-31'
-    union all
+        id,
+           course_id,
+           chapter_id,
+           user_id,
+           position_sec,
+           create_time,
+           deleted
+    from ${APP}.ods_user_chapter_process_full
+    where dt = '$do_date'
+) process
+left join
+(
+    select
+        id,
+        chapter_id
+    from ${APP}.ods_video_info_full
+    where dt='$do_date'
+) video
+on process.chapter_id=video.chapter_id
+left join
+(
+    select
+        id,
+        subject_id
+    from ${APP}.ods_course_info_full
+    where dt='$do_date'
+) course
+on course.id = process.course_id
+left join
+(
+    select
+        id,
+        category_id
+    from ${APP}.ods_base_subject_info_full
+    where dt='$do_date'
+) sub
+on course.subject_id = sub.id
+left join (
     select
         data.id,
-        data.user_id,
-        data.province_id,
-        date_format(data.create_time,'yyyy-MM-dd') order_date_id,
-        data.create_time,
-        null payment_date_id,
-        null payment_time,
-        null finish_date_id,
-        null finish_time,
-        data.original_total_amount,
-        data.activity_reduce_amount,
-        data.coupon_reduce_amount,
-        data.total_amount,
-        null payment_amount
+        data.user_id
     from ${APP}.ods_order_info_inc
-    where dt='$do_date'
-    and type='insert'
-)oi
-left join
-(
-    select
-        data.order_id,
-        date_format(data.callback_time,'yyyy-MM-dd') payment_date_id,
-        data.callback_time payment_time,
-        data.total_amount payment_amount
-    from ${APP}.ods_payment_info_inc
-    where dt='$do_date'
+    where dt ='$do_date'
     and type='update'
-    and array_contains(map_keys(old),'payment_status')
-    and data.payment_status='1602'
-)pi
-on oi.order_id=pi.order_id
+    and data.order_status='1002'
+) pay
+on process.user_id = pay.user_id
+left join (
+    select
+        data.course_id,
+        data.create_time,
+        data.order_id
+    from ${APP}.ods_order_detail_inc
+    where dt='$do_date'
+    and type='insert'
+) detail
+on pay.id = detail.order_id;
+"
+
+dwd_consume_test_exam_inc="
+insert overwrite table ${APP}.dwd_consume_test_exam_inc partition (dt='$do_date')
+select
+        exam.id,
+        exam.paper_id,
+        paper.course_id    ,
+        category_id ,
+        subject_id,
+        exam.user_id,
+        exam.score,
+        exam.duration_sec,
+        exam.create_time,
+        exam.submit_time,
+        exam.update_time,
+        exam.deleted
+from
+(
+    select
+        data.id,
+        data.paper_id,
+        data.user_id,
+        data.score,
+        data.duration_sec,
+        data.create_time,
+        data.submit_time,
+        data.update_time,
+        data.deleted
+    from ${APP}.ods_test_exam_inc
+    where dt = '$do_date'
+    and type='insert'
+) exam
 left join
 (
     select
-        data.order_id,
-        date_format(data.operate_time,'yyyy-MM-dd') finish_date_id,
-        data.operate_time finish_time
-    from ${APP}.ods_order_status_log_inc
+        id,
+        course_id
+    from ${APP}.ods_test_paper_full
     where dt='$do_date'
+) paper
+on exam.paper_id = paper.id
+left join
+(
+    select
+        id,
+        subject_id
+    from ${APP}.ods_course_info_full
+    where dt='$do_date'
+) course
+on course.id = paper.course_id
+left join
+(
+    select
+        id,
+        category_id
+    from ${APP}.ods_base_subject_info_full
+    where dt='$do_date'
+) sub
+on course.subject_id = sub.id;
+"
+dwd_user_register_inc="
+insert overwrite table ${APP}.dwd_user_register_inc partition (dt='$do_date')
+select
+    distinct log.uid     ,
+     users.date_id ,
+     users.create_time,
+    log.ch     ,
+    log.ar   ,
+    log.vc    ,
+    log.mid    ,
+    log.ba    ,
+    log.md   ,
+    log.os
+from(
+    select
+        common.ar,
+        common.uid,
+        common.ch,
+        common.vc,
+        common.mid,
+        common.ba,
+        common.md,
+        common.os
+    from ${APP}.ods_log_inc
+    where dt = '$do_date'
+    and \`start\`.entry is not null
+) log
+left join
+(
+    select
+        data.id,
+        date_format(data.create_time,'yyyy-MM-dd') as date_id ,
+        date_format(data.create_time,'HH-mm-ss') as create_time
+    from ${APP}.ods_user_info_inc
+    where dt='$do_date'
+) users
+on log.uid = users.id;
+"
+
+
+dwd_consume_test_question_inc="
+
+insert overwrite table ${APP}.dwd_consume_test_question_inc partition (dt='$do_date')
+select
+    question.id ,
+    category_id ,
+    subject_id  ,
+    course_id   ,
+    chapter_id   ,
+    exam_id ,
+    paper_id ,
+    question_id ,
+    user_id ,
+    answer ,
+    is_correct ,
+    score ,
+    create_time,
+    update_time,
+    deleted 
+from
+(
+    select
+        data.id ,
+        data.exam_id ,
+        data.paper_id ,
+        data.question_id ,
+        data.user_id ,
+        data.answer,
+        data.is_correct,
+        data.score,
+        data.create_time ,
+        data.update_time,
+        data.deleted
+    from ${APP}.ods_test_exam_question_inc
+    where dt = '$do_date'
     and type='insert'
-    and data.order_status='1004'
-)log
-on oi.order_id=log.order_id;
+) question
+left join
+(
+    select
+        id,
+        course_id
+    from ${APP}.ods_test_paper_full
+    where dt='$do_date'
+) paper
+on question.paper_id = paper.id
+left join
+(
+    select
+        id,
+        subject_id
+    from ${APP}.ods_course_info_full
+    where dt='$do_date'
+) course
+on course.id = paper.course_id
+left join
+(
+    select
+        id,
+        category_id
+    from ${APP}.ods_base_subject_info_full
+    where dt='$do_date'
+) sub
+on course.subject_id = sub.id
+left join
+(
+    select
+        id,
+        chapter_id
+    from ${APP}.ods_test_question_info_full
+    where dt='$do_date'
+) info
+on question.question_id = info.id;
+"
+
+
+dwd_user_login_inc="
+insert overwrite table ${APP}.dwd_user_login_inc partition (dt='$do_date')
+select
+     log.uid     ,
+     log.date_id ,
+     login_time,
+    log.ch     ,
+    log.ar   ,
+    log.vc    ,
+    log.mid    ,
+    log.ba    ,
+    log.md   ,
+    log.os
+from(
+    select
+        distinct common.sid,
+        common.ar,
+        common.uid,
+        common.ch,
+        common.vc,
+        common.mid,
+        common.ba,
+        common.md,
+        common.os,
+        date_format(from_utc_timestamp(ts,'GMT+8'),'yyyy-MM-dd') as date_id,
+        date_format(from_utc_timestamp(ts,'GMT+8'),'HH-mm-ss') as login_time
+    from ${APP}.ods_log_inc
+    where dt = '$do_date'
+    and \`start\`.entry is not null
+) log;
+"
+
+
+dwd_trade_cart_add_inc="
+set hive.cbo.enable=false;
+
+insert overwrite table ${APP}.dwd_trade_cart_add_inc partition (dt='$do_date')
+select
+    data.id                 ,
+    data.user_id            ,
+    data.course_id             ,
+    date_format(data.create_time,'yyyy-MM-dd') date_id            ,
+    data.create_time        ,
+    data.cart_price            
+from ${APP}.ods_cart_info_inc
+where dt ='$do_date' and type = 'insert';
 "
 
 dwd_trade_order_detail_inc="
-insert overwrite table ${APP}.dwd_trade_order_detail_inc partition (dt='2022-06-09')
-select
-    od.id,
-    order_id,
-    user_id,
-    sku_id,
-    province_id,
-    activity_id,
-    activity_rule_id,
-    coupon_id,
-    date_id,
-    create_time,
-    sku_num,
-    split_original_amount,
-    nvl(split_activity_amount,0.0),
-    nvl(split_coupon_amount,0.0),
-    split_total_amount
+insert overwrite table ${APP}.dwd_trade_order_detail_inc partition (dt='$do_date')
+select distinct
+    od.id                    ,
+    order_id              ,
+    user_id               ,
+    course_id                ,
+    province_id           ,
+    session_id            ,
+    source_id            ,
+    date_id               ,
+    create_time           ,
+    origin_amount ,
+    coupon_reduce   ,
+    final_amount    
 from
 (
-    select
-        data.id,
-        data.order_id,
-        data.sku_id,
-        date_format(data.create_time, 'yyyy-MM-dd') date_id,
-        data.create_time,
-        data.sku_num,
-        data.sku_num * data.order_price split_original_amount,
-        data.split_total_amount,
-        data.split_activity_amount,
-        data.split_coupon_amount
-    from ${APP}.ods_order_detail_inc
-    where dt = '$do_date'
-    and type = 'insert'
+select
+    data.id                    ,
+    data.order_id              ,
+    data.course_id                ,
+    date_format(data.create_time,'yyyy-MM-dd') date_id               ,
+    data.create_time           ,
+    data.origin_amount ,
+    data.coupon_reduce   ,
+    data.final_amount    
+from ${APP}.ods_order_detail_inc
+where dt = '$do_date' and type = 'insert'
 ) od
-left join
-(
-    select
-        data.id,
-        data.user_id,
-        data.province_id
-    from ${APP}.ods_order_info_inc
-    where dt = '$do_date'
-    and type = 'insert'
-) oi
-on od.order_id = oi.id
-left join
-(
-    select
-        data.order_detail_id,
-        data.activity_id,
-        data.activity_rule_id
-    from ${APP}.ods_order_detail_activity_inc
-    where dt = '$do_date'
-    and type = 'insert'
-) act
-on od.id = act.order_detail_id
-left join
-(
-    select
-        data.order_detail_id,
-        data.coupon_id
-    from ${APP}.ods_order_detail_coupon_inc
-    where dt = '$do_date'
-    and type = 'insert'
-) cou
-on od.id = cou.order_detail_id;
+left join (
+select
+    data.id                    ,
+    data.user_id               ,
+    data.province_id           ,
+    data.session_id            
+from
+${APP}.ods_order_info_inc
+where dt = '$do_date' and type = 'insert'
+)oi on od.order_id = oi.id
+left join (
+select
+    common.sid           ,
+    common.sc source_id 
+from
+${APP}.ods_log_inc
+where dt = '$do_date'
+)log on oi.session_id = log.sid;
 "
 
 dwd_trade_pay_detail_suc_inc="
@@ -223,93 +375,100 @@ select
     od.id,
     od.order_id,
     user_id,
-    sku_id,
+    course_id,
     province_id,
-    activity_id,
-    activity_rule_id,
-    coupon_id,
     payment_type,
-    pay_dic.dic_name,
     date_format(callback_time,'yyyy-MM-dd') date_id,
     callback_time,
-    sku_num,
-    split_original_amount,
-    nvl(split_activity_amount,0.0),
-    nvl(split_coupon_amount,0.0),
-    split_total_amount
+    origin_amount,
+    nvl(coupon_reduce,0.0),
+    od.final_amount
 from
 (
-    select
+select
         data.id,
         data.order_id,
-        data.sku_id,
-        data.sku_num,
-        data.sku_num * data.order_price split_original_amount,
-        data.split_total_amount,
-        data.split_activity_amount,
-        data.split_coupon_amount
-    from ${APP}.ods_order_detail_inc
-    where (dt = '$do_date' or dt = date_add('$do_date',-1))
-    and (type = 'insert' or type = 'bootstrap-insert')
+        data.course_id,
+        data.origin_amount,
+        data.final_amount,
+        data.coupon_reduce
+from ${APP}.ods_order_detail_inc
+where (dt = '$do_date' or dt = date_sub('$do_date',1))
+and (type = 'insert' or type = 'bootstrap-insert')
 ) od
-join
-(
-    select
-        data.user_id,
-        data.order_id,
-        data.payment_type,
-        data.callback_time
-    from ${APP}.ods_payment_info_inc
-    where dt='$do_date'
-    and type='update'
-    and array_contains(map_keys(old),'payment_status')
-    and data.payment_status='1602'
-) pi
-on od.order_id=pi.order_id
-left join
-(
-    select
-        data.id,
-        data.province_id
-    from ${APP}.ods_order_info_inc
-    where (dt = '$do_date' or dt = date_add('$do_date',-1))
-    and (type = 'insert' or type = 'bootstrap-insert')
-) oi
-on od.order_id = oi.id
-left join
-(
-    select
-        data.order_detail_id,
-        data.activity_id,
-        data.activity_rule_id
-    from ${APP}.ods_order_detail_activity_inc
-    where (dt = '$do_date' or dt = date_add('$do_date',-1))
-    and (type = 'insert' or type = 'bootstrap-insert')
-) act
-on od.id = act.order_detail_id
-left join
-(
-    select
-        data.order_detail_id,
-        data.coupon_id
-    from ${APP}.ods_order_detail_coupon_inc
-    where (dt = '$do_date' or dt = date_add('$do_date',-1))
-    and (type = 'insert' or type = 'bootstrap-insert')
-) cou
-on od.id = cou.order_detail_id
-left join
-(
-    select
-        dic_code,
-        dic_name
-    from ${APP}.ods_base_dic_full
-    where dt='$do_date'
-    and parent_code='11'
-) pay_dic
-on pi.payment_type=pay_dic.dic_code;
+left join (
+select
+    data.id                    ,
+    data.user_id               ,
+    data.province_id
+from
+${APP}.ods_order_info_inc
+where (dt = '$do_date' or dt = date_sub('$do_date',1)) and (type = 'insert' or type = 'bootstrap-insert')
+)oi on od.order_id = oi.id
+join (
+select
+    data.order_id             ,
+    data.payment_type               ,
+    data.callback_time
+from
+${APP}.ods_payment_info_inc
+where dt = '$do_date'
+and type = 'insert'
+and data.payment_status='1602'
+)pi on od.id = pi.order_id;
 "
 
+dwd_interaction_favor_add_inc="
+
+
+insert overwrite table ${APP}.dwd_interaction_favor_add_inc partition(dt='$do_date')
+select
+    data.id,
+    data.user_id,
+    data.course_id,
+    date_format(data.create_time,'yyyy-MM-dd') date_id,
+    data.create_time
+from ${APP}.ods_favor_info_inc
+where dt='$do_date'
+and type = 'insert';
+"
+
+dwd_interaction_comment_info_inc="
+
+
+insert overwrite table ${APP}.dwd_interaction_comment_info_inc partition(dt='$do_date')
+select
+    data.id          ,
+    data.user_id     ,
+    data.chapter_id  ,
+    data.course_id      ,
+    data.comment_txt  ,
+    date_format(data.create_time,'yyyy-MM-dd') date_id     ,
+    data.create_time 
+from ${APP}.ods_comment_info_inc
+where dt='$do_date' and type = 'insert';
+"
+
+
+dwd_interaction_review_info_inc="
+
+
+insert overwrite table ${APP}.dwd_interaction_review_info_inc partition(dt='$do_date')
+select
+    data.id          ,
+    data.user_id     ,
+    data.course_id      ,
+    data.review_txt  ,
+    data.review_stars  ,
+    date_format(data.create_time,'yyyy-MM-dd') date_id     ,
+    data.create_time 
+from ${APP}.ods_review_info_inc
+where dt='$do_date' and type = 'insert';
+"
+
+
 dwd_traffic_page_view_inc="
+
 set hive.cbo.enable=false;
 insert overwrite table ${APP}.dwd_traffic_page_view_inc partition (dt='$do_date')
 select
@@ -320,15 +479,14 @@ select
     model,
     mid_id,
     operate_system,
+    source_id,
     user_id,
     version_code,
     page_item,
     page_item_type,
     last_page_id,
     page_id,
-    from_pos_id,
-    from_pos_seq,
-    refer_id,
+
     date_format(from_utc_timestamp(ts,'GMT+8'),'yyyy-MM-dd') date_id,
     date_format(from_utc_timestamp(ts,'GMT+8'),'yyyy-MM-dd HH:mm:ss') view_time,
     sid session_id,
@@ -343,6 +501,7 @@ from
         common.md model,
         common.mid mid_id,
         common.os operate_system,
+        common.sc source_id,
         common.uid user_id,
         common.vc version_code,
         common.sid sid,
@@ -351,107 +510,90 @@ from
         page.item_type page_item_type,
         page.last_page_id,
         page.page_id,
-        page.from_pos_id,
-        page.from_pos_seq,
-        page.refer_id,
         ts
     from ${APP}.ods_log_inc
     where dt='$do_date'
     and page is not null
 )log;
+
 "
 
-dwd_user_login_inc="
-insert overwrite table ${APP}.dwd_user_login_inc partition (dt = '$do_date')
-select user_id,
-       date_format(from_utc_timestamp(ts, 'GMT+8'), 'yyyy-MM-dd')          date_id,
-       date_format(from_utc_timestamp(ts, 'GMT+8'), 'yyyy-MM-dd HH:mm:ss') login_time,
-       channel,
-       area_code                                                           province_id,
-       version_code,
-       mid_id,
-       brand,
-       model,
-       operate_system
-from (
-         select user_id,
-                channel,
-                area_code,
-                version_code,
-                mid_id,
-                brand,
-                model,
-                operate_system,
-                ts
-         from (
-                  select user_id,
-                         channel,
-                         area_code,
-                         version_code,
-                         mid_id,
-                         brand,
-                         model,
-                         operate_system,
-                         ts,
-                         row_number() over (partition by session_id order by ts) rn
-                  from (select common.uid user_id,
-                               common.ch  channel,
-                               common.ar  area_code,
-                               common.vc  version_code,
-                               common.mid mid_id,
-                               common.ba  brand,
-                               common.md  model,
-                               common.os  operate_system,
-                               common.sid session_id,
-                               ts
-                        from ${APP}.ods_log_inc
-                        where dt = '$do_date'
-                          and page is not null
-                       ) t1
-                  where user_id is not null
-              ) t2
-         where rn = 1
-     ) t3;
-"
-dwd_user_register_inc="
-insert overwrite table ${APP}.dwd_user_register_inc partition(dt='$do_date')
+
+dwd_traffic_actions_inc="
+SET hive.support.quoted.identifiers=column;
+set hive.cbo.enable=false;
+insert overwrite table ${APP}.dwd_traffic_actions_inc partition (dt='$do_date')
 select
-    ui.user_id,
-    date_format(create_time,'yyyy-MM-dd') date_id,
-    create_time,
-    channel,
-    province_id,
-    version_code,
-    mid_id,
-    brand,
-    model,
-    operate_system
+    action_id    ,
+    item        ,
+    item_type    ,
+    date_format(from_utc_timestamp(ts,'GMT+8'),'yyyy-MM-dd') date_id
 from
 (
     select
-        data.id user_id,
-        data.create_time
-    from ${APP}.ods_user_info_inc
+    struct1.action_id    ,
+    struct1.item         ,
+    struct1.item_type    ,
+    struct1.ts
+    from ${APP}.ods_log_inc
+    lateral view explode(actions) array1 as struct1
     where dt='$do_date'
-    and type='insert'
-)ui
-left join
+)log;
+
+"
+
+
+dwd_traffic_display_inc="
+set hive.cbo.enable=false;
+insert overwrite table ${APP}.dwd_traffic_display_inc partition (dt='$do_date')
+select
+    display_type   ,
+    item           ,
+    item_type      ,
+    \`order\`          ,
+    pos_id         
+FROM
 (
-    select
-        common.ar province_id,
-        common.ba brand,
-        common.ch channel,
-        common.md model,
-        common.mid mid_id,
-        common.os operate_system,
-        common.uid user_id,
-        common.vc version_code
+select
+    struct1.display_type    ,
+    struct1.item         ,
+    struct1.item_type    ,
+    struct1.\`order\`         ,
+    struct1.pos_id
+    from ${APP}.ods_log_inc
+    lateral view explode(displays) array1 as struct1
+    where dt='$do_date'
+)log;
+"
+
+
+dwd_traffic_start_inc="
+
+set hive.cbo.enable=false;
+insert overwrite table ${APP}.dwd_traffic_start_inc partition (dt='$do_date')
+select
+    entry               ,
+    first_open          ,
+    loading_time        ,
+    open_ad_id          ,
+    open_ad_ms          ,
+    open_ad_skip_ms     ,
+    date_format(from_utc_timestamp(ts,'GMT+8'),'yyyy-MM-dd')            
+from
+(
+select
+    \`start\`.entry               ,
+    \`start\`.first_open          ,
+    \`start\`.loading_time        ,
+    \`start\`.open_ad_id          ,
+    \`start\`.open_ad_ms          ,
+    \`start\`.open_ad_skip_ms     ,
+    ts
     from ${APP}.ods_log_inc
     where dt='$do_date'
-    and page.page_id='register'
-    and common.uid is not null
-)log
-on ui.user_id=log.user_id;
+    and \`start\`.entry is not null
+)log;
+
 "
 
 case $1 in
@@ -466,26 +608,44 @@ case $1 in
     ;;
     "dwd_trade_cart_full" )
         hive -e "$dwd_trade_cart_full"
-    ;;   
-    "dwd_trade_trade_flow_acc" )
-        hive -e "$dwd_trade_trade_flow_acc"
-    ;;  
-    "dwd_tool_coupon_used_inc" )
-        hive -e "$dwd_tool_coupon_used_inc"
     ;;
     "dwd_interaction_favor_add_inc" )
         hive -e "$dwd_interaction_favor_add_inc"
     ;;
+    "dwd_interaction_comment_info_inc" )
+        hive -e "$dwd_interaction_comment_info_inc"
+    ;;
+    "dwd_interaction_review_info_inc" )
+        hive -e "$dwd_interaction_review_info_inc"
+    ;;
     "dwd_traffic_page_view_inc" )
         hive -e "$dwd_traffic_page_view_inc"
     ;;
+    "dwd_traffic_actions_inc" )
+        hive -e "$dwd_traffic_actions_inc"
+    ;;
+    "dwd_traffic_display_inc" )
+        hive -e "$dwd_traffic_display_inc"
+    ;;
+    "dwd_traffic_start_inc" )
+        hive -e "$dwd_traffic_start_inc"
+    ;;
+    "dwd_consume_video_play_inc" )
+        hive -e "$dwd_consume_video_play_inc"
+    ;;
+    "dwd_consume_test_exam_inc" )
+        hive -e "$dwd_consume_test_exam_inc"
+    ;;
+    "dwd_consume_test_question_inc" )
+        hive -e "$dwd_consume_test_question_inc"
+    ;;
     "dwd_user_register_inc" )
         hive -e "$dwd_user_register_inc"
-    ;;   
+    ;;
     "dwd_user_login_inc" )
         hive -e "$dwd_user_login_inc"
-    ;; 
+    ;;
     "all" )
-        hive -e "$dwd_trade_cart_add_inc$dwd_trade_order_detail_inc$dwd_trade_pay_detail_suc_inc$dwd_trade_cart_full$dwd_trade_trade_flow_acc$dwd_tool_coupon_used_inc$dwd_interaction_favor_add_inc$dwd_traffic_page_view_inc$dwd_user_register_inc$dwd_user_login_inc"
+        hive -e "$dwd_traffic_display_inc$dwd_trade_cart_add_inc$dwd_trade_order_detail_inc$dwd_trade_pay_detail_suc_inc$dwd_trade_cart_full$dwd_interaction_favor_add_inc$dwd_interaction_comment_info_inc$dwd_interaction_review_info_inc$dwd_traffic_page_view_inc$dwd_traffic_actions_inc$dwd_traffic_start_inc$dwd_consume_video_play_inc$dwd_consume_test_exam_inc$dwd_consume_test_question_inc$dwd_user_register_inc$dwd_user_login_inc"
     ;;
 esac

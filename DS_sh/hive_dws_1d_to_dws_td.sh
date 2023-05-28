@@ -1,82 +1,77 @@
 #!/bin/bash
-APP=gmall
+APP=edu
 
-# 如果输入的日期按照取输入日期；如果没输入日期取当前时间的前一天
 if [ -n "$2" ] ;then
-    do_date=$2
-else 
-    do_date=`date -d "-1 day" +%F`
+   do_date=$2
+else
+   echo "请传入日期参数"
+   exit
 fi
 
 dws_trade_user_order_td="
+
 insert overwrite table ${APP}.dws_trade_user_order_td partition(dt='$do_date')
 select
-    nvl(old.user_id,new.user_id),
-    if(new.user_id is not null and old.user_id is null,'$do_date',old.order_date_first),
-    if(new.user_id is not null,'$do_date',old.order_date_last),
-    nvl(old.order_count_td,0)+nvl(new.order_count_1d,0),
-    nvl(old.order_num_td,0)+nvl(new.order_num_1d,0),
-    nvl(old.original_amount_td,0)+nvl(new.order_original_amount_1d,0),
-    nvl(old.activity_reduce_amount_td,0)+nvl(new.activity_reduce_amount_1d,0),
-    nvl(old.coupon_reduce_amount_td,0)+nvl(new.coupon_reduce_amount_1d,0),
-    nvl(old.total_amount_td,0)+nvl(new.order_total_amount_1d,0)
-from
-(
-    select
-        user_id,
-        order_date_first,
-        order_date_last,
-        order_count_td,
-        order_num_td,
-        original_amount_td,
-        activity_reduce_amount_td,
-        coupon_reduce_amount_td,
-        total_amount_td
-    from ${APP}.dws_trade_user_order_td
-    where dt=date_add('$do_date',-1)
-)old
-full outer join
-(
-    select
-        user_id,
-        order_count_1d,
-        order_num_1d,
-        order_original_amount_1d,
-        activity_reduce_amount_1d,
-        coupon_reduce_amount_1d,
-        order_total_amount_1d
-    from ${APP}.dws_trade_user_order_1d
-    where dt='$do_date'
-)new
-on old.user_id=new.user_id;
+    user_id,
+    min(dt) order_date_first,
+    max(dt) order_date_last,
+    sum(order_count_1d) order_count,
+    sum(order_original_amount_1d) original_amount,
+    sum(coupon_reduce_amount_1d) coupon_reduce_amount,
+    sum(order_total_amount_1d) total_amount
+from ${APP}.dws_trade_user_order_1d
+ where dt = '$do_date'
+group by user_id;
 "
 
 dws_user_user_login_td="
-insert overwrite table ${APP}.dws_user_user_login_td partition(dt='$do_date')
-select
-    nvl(old.user_id,new.user_id),
-    if(new.user_id is null,old.login_date_last,'$do_date'),
-    null,
-    nvl(old.login_count_td,0)+nvl(new.login_count_1d,0)
-from
-(
-    select
-        user_id,
-        login_date_last,
-        login_count_td
-    from ${APP}.dws_user_user_login_td
-    where dt=date_add('$do_date',-1)
-)old
-full outer join
-(
-    select
-        user_id,
-        count(*) login_count_1d
-    from ${APP}.dwd_user_login_inc
-    where dt='$do_date'
-    group by user_id
-)new
-on old.user_id=new.user_id;
+
+insert overwrite table ${APP}.dws_user_user_login_td partition (dt = '$do_date')
+select u.id                                                         user_id,
+       nvl(login_date_last, date_format(create_time, 'yyyy-MM-dd')) login_date_last,
+       date_format(create_time, 'yyyy-MM-dd')                       login_date_first,
+       nvl(login_count_td, 1)                                       login_count_td
+from (
+         select id,
+                create_time
+         from ${APP}.dim_user_zip
+         where dt = '9999-12-31'
+     ) u
+         left join
+     (
+         select user_id,
+                max(dt)  login_date_last,
+                count(*) login_count_td
+         from ${APP}.dwd_user_login_inc
+         group by user_id
+     ) l
+     on u.id = l.user_id;
+"
+dws_trade_user_payment_td="
+
+insert overwrite table ${APP}.dws_trade_user_payment_td partition(dt='$do_date')
+select user_id,
+       min(payment_date_first)          payment_date_first,
+       max(payment_date_last)           payment_date_last,
+       sum(payment_count_td)            payment_count_td,
+       sum(payment_amount_td)           payment_amount_td
+from (
+         select user_id,
+                payment_date_first,
+                payment_date_last,
+                payment_count_td,
+                payment_amount_td
+         from ${APP}.dws_trade_user_payment_td
+         where dt = date_add('$do_date', -1)
+         union all
+         select user_id,
+                '$do_date' payment_date_first,
+                '$do_date' payment_date_last,
+                payment_count_1d,
+                payment_amount_1d
+         from ${APP}.dws_trade_user_payment_1d
+         where dt = '$do_date') t1
+group by user_id;
 "
 
 case $1 in
@@ -86,7 +81,10 @@ case $1 in
     "dws_user_user_login_td" )
         hive -e "$dws_user_user_login_td"
     ;;
+    "dws_trade_user_payment_td" )
+        hive -e "$dws_trade_user_payment_td"
+    ;;
     "all" )
-        hive -e "$dws_trade_user_order_td$dws_user_user_login_td"
+        hive -e "$dws_trade_user_order_td$dws_user_user_login_td$dws_trade_user_payment_td"
     ;;
 esac
