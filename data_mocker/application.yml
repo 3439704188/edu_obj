@@ -1,7 +1,7 @@
 # 外部配置打开
 logging.config: "/opt/module/data_mocker/logback.xml"
 #业务日期
-mock.date: "2022-02-22"
+mock.date: "2022-02-23"
 
   #模拟数据发送模式
 mock.type: "log"
@@ -49,7 +49,7 @@ mock.user-session.count: 1000
   #设备最大值
 mock.max.mid: 1000
 
-mock.if-realtime: 1
+mock.if-realtime: 0
 #访问时间分布权重
 mock.start-time-weight: "10:5:0:0:0:0:5:5:5:10:10:15:20:10:10:10:10:10:20:25:30:35:30:20"
 
